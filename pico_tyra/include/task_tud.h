@@ -8,9 +8,9 @@
 #ifndef TASK_TUD_H_
 #define TASK_TUD_H_
 
+#include "pico/async_context.h"
 
-void task_tud_init(MainEnvironement_t *MainEnvironement);
-
+async_context_t *async_tinyusb_init(void);
 
 
 

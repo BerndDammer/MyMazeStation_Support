@@ -1,44 +1,58 @@
 #include <stdio.h>
-#include "pico/stdlib.h"
-//#include "hardware/spi.h"
+#include "pico.h"
+#include "pico/stdio.h"
 #include "hardware/timer.h"
 #include "hardware/clocks.h"
 
-#include "FreeRTOS.h"
-#include "task.h"
+#include "pico/async_context.h"
+#include "pico/async_context_poll.h"
+
 
 #include "task_blinker.h"
 #include "task_console.h"
 #include "task_tud.h"
 
-#include "global_signal.h"
 
-// the magic global !
-MainEnvironement_t MainEnvironement;
-
-int gg(void)
-{
-	return (to_ms_since_boot(get_absolute_time()));
-}
 
 int main(void)
 {
-	printf("\nAt main entry %i\n", gg()); // no output !!!!
+	int poll_counter = 0;
 
 	stdio_init_all();
 
-	printf("\nAfter init stdio %i\n", gg());
+	async_context_t *async_context_console;
+	async_context_t *async_context_blinky;
+	async_context_t *async_context_tinyusb;
 
-	MainEnvironement.mainEventGroup = xEventGroupCreate();
+	printf("\nStarting");
+	printf("\nTime ms since start %i", //
+			to_ms_since_boot(get_absolute_time()) //
+					);
 
-	blinker_init(&MainEnvironement);
-	console_init(&MainEnvironement);
-	task_tud_init(&MainEnvironement);
+	async_context_console = async_console_init();
+	if (async_context_console == NULL )
+	{
+		panic("console iii");
+	}
+	async_context_blinky = async_blinky_init();
+	if (async_context_blinky == NULL )
+	{
+		panic("blinky iii");
+	}
 
-	printf("\nBefore scheduler %i", gg());
-	vTaskStartScheduler();
+	async_context_tinyusb = async_tinyusb_init();
+	if (async_context_tinyusb == NULL )
+	{
+		panic("tud iii");
+	}
 
-	puts("You should not be here!");
+	while (true)
+	{
+		async_context_poll( async_context_console);
+		async_context_poll( async_context_blinky);
+		async_context_poll( async_context_tinyusb);
 
+		poll_counter++;
+	}
 	return 0;
 }

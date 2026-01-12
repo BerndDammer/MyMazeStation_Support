@@ -8,9 +8,9 @@
 #ifndef TASK_BLINKER_H_
 #define TASK_BLINKER_H_
 
-#include "global_signal.h"
+#include "pico/async_context.h"
+#include "pico/async_context_poll.h"
 
-void blinker_init(MainEnvironement_t *MainEnvironement);
-
+async_context_t* async_blinky_init(void);
 
 #endif /* TASK_BLINKER_H_ */

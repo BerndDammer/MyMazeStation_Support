@@ -9,7 +9,8 @@
 #define TASK_CONSOLE_H_
 
 
-void console_init(MainEnvironement_t *MainEnvironement);
+#include "pico/async_context.h"
 
+async_context_t *async_console_init(void);
 
 #endif /* TASK_CONSOLE_H_ */

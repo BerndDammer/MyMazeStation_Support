@@ -5,31 +5,41 @@
  *      Author: manni4
  */
 
-#include "global_signal.h"
 #include "task_tud.h"
-#include "task_prio.h"
-
 #include <stdio.h>
-
 #include "tusb.h"
 
-// XXX : need this QQQQQQ
-// #include "bsp/board.h"
+#include "pico/async_context.h"
+#include "pico/async_context_poll.h"
 
-static TaskHandle_t tud_taskhandle;
+async_context_poll_t async_context_tinyusb;
+async_when_pending_worker_t tinyusb_worker;
 
-void tud_thread(MainEnvironement_t *MainEnvironement) {
-	// board_init();
-	tusb_init();
 
-	while (true) {
-		// XXX tasking by freertos does not work
+void process_tud(async_context_t *context,
+		struct async_when_pending_worker *worker)
+{
 		tud_task();
-		vTaskDelay(1); // let it yield
-	}
+	async_context_set_work_pending(&async_context_tinyusb.core,
+			&tinyusb_worker);
 }
 
-void task_tud_init(MainEnvironement_t *MainEnvironement) {
-	xTaskCreate((CALLEE) tud_thread, "TUD", configMINIMAL_STACK_SIZE,
-			MainEnvironement, TUD_TASK_PRIO, &tud_taskhandle);
+
+async_context_t *async_tinyusb_init(void)
+{
+	tusb_init();
+
+	if (!async_context_poll_init_with_defaults(&async_context_tinyusb))
+	{
+		panic("Async context console init fail");
+		return NULL;
+	}
+		tinyusb_worker.do_work = process_tud;
+	async_context_add_when_pending_worker(&async_context_tinyusb.core,
+			&tinyusb_worker);
+
+			async_context_set_work_pending(&async_context_tinyusb.core,
+			&tinyusb_worker);
+
+	return( &async_context_tinyusb.core);
 }

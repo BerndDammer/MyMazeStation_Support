@@ -45,7 +45,7 @@ file(GLOB all_SRCS
         "${PROJECT_SOURCE_DIR}/include/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/*.c"
-        "${PROJECT_SOURCE_DIR}/src/*.s"
+        "${PROJECT_SOURCE_DIR}/src/*.S"
         )
 
 
@@ -74,6 +74,9 @@ target_link_libraries(pico_tyra
         hardware_timer
         hardware_clocks
         tinyusb_device
+        pico_unique_id
+        pico_async_context_poll
+        pico_platform
 )
 
 pico_add_extra_outputs(pico_tyra)

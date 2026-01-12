@@ -6,24 +6,34 @@
  */
 
 #include "task_blinker.h"
-#include "pico/stdlib.h"
-#include "pico/types.h"
 
-#include "hardware/structs/scb.h"
+
+//#include "hardware/structs/scb.h"
 
 #include <stdio.h>
 
-#include "FreeRTOS.h"
-#include "task.h"
-#include "task_prio.h"
 
-#include "global_signal.h"
+#include "pico.h"
+#include "pico/stdlib.h"
+#include "pico/stdio.h"
+//#include "pico/types.h"
+#include "pico/async_context.h"
+#include "pico/async_context_poll.h"
+#include "pico/runtime.h"
 
-#define STR_BUF_LEN 100
+//#define STR_BUF_LEN 100
 
-static TaskHandle_t console_taskhandle;
 
-static int c;
+//static int c;
+
+async_context_poll_t async_context_console;
+async_when_pending_worker_t process_char_worker;
+
+struct char_callback_para_t
+{
+	char c;
+	bool has;
+} cbp;
 
 static void console_menu()
 {
@@ -37,29 +47,18 @@ static void console_menu()
 
 }
 
-void console_command(int c, MainEnvironement_t *MainEnvironement)
+
+void process_char(async_context_t *context,
+		struct async_when_pending_worker *worker)
 {
-	switch (c)
+	switch (cbp.c)
 	{
 	case 'r':
 	{
-		scb_hw->aircr = 0x05FA << 16 | 4; // arm M0(+) Manual
 	}
 		break;
 	case 'e':
 	{
-		puts("\n");
-
-		EventBits_t bits = xEventGroupGetBits(MainEnvironement->mainEventGroup);
-		for (unsigned int mask = 0X80000000; mask != 0; mask >>= 1)
-		{
-			putchar(mask & bits ? '1' : '0');
-			if (mask & 0x01010100)
-			{
-				putchar('.');
-			}
-		}
-		puts("\n");
 	}
 		break;
 	case ' ':
@@ -67,44 +66,31 @@ void console_command(int c, MainEnvironement_t *MainEnvironement)
 		console_menu();
 		break;
 	}
+	cbp.has = false;
 }
 
-void console_thread(MainEnvironement_t *MainEnvironement)
-{
-	console_menu();
 
-	while (true)
+void chars_available_callback(void *char_callback_para)
+{
+	cbp.c = getchar_timeout_us(1);
+	cbp.has = true;
+	async_context_set_work_pending(&async_context_console.core,
+			&process_char_worker);
+}
+
+async_context_t* async_console_init(void)
+{
+	if (!async_context_poll_init_with_defaults(&async_context_console))
 	{
-		vTaskDelay(100);
-		xEventGroupWaitBits(MainEnvironement->mainEventGroup,
-		EVENT_MASK_CONSOLE_CHAR,
-		pdTRUE,
-		pdFALSE, 100000);
-		if (c != 0)
-		{
-			console_command(c, MainEnvironement);
-			c = 0;
-		}
-		else
-		{
-			//
-		}
+		panic("Async context console init fail");
+		return NULL ;
 	}
-}
+	stdio_set_chars_available_callback(chars_available_callback, (void*) &cbp);
 
-void chars_available_callback(MainEnvironement_t *MainEnvironement)
-{
-	c = getchar();
-	xEventGroupSetBits(MainEnvironement->mainEventGroup,
-	EVENT_MASK_CONSOLE_CHAR);
-}
+	process_char_worker.do_work = process_char;
+	async_context_add_when_pending_worker(&async_context_console.core,
+			&process_char_worker);
 
-void console_init(MainEnvironement_t *MainEnvironement)
-{
-	xTaskCreate((CALLEE) console_thread, //
-			"CONSOLE", configMINIMAL_STACK_SIZE, MainEnvironement,
-			BLINKER_TASK_PRIO, &console_taskhandle);
-	stdio_set_chars_available_callback((CALLEE)chars_available_callback, //
-			MainEnvironement);
+	return &async_context_console.core;
 }
 
