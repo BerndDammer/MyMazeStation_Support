@@ -5,10 +5,7 @@
  *      Author: manni4
  */
 
-#include "task_blinker.h"
-
-
-//#include "hardware/structs/scb.h"
+#include "task_console.h"
 
 #include <stdio.h>
 
@@ -16,15 +13,9 @@
 #include "pico.h"
 #include "pico/stdlib.h"
 #include "pico/stdio.h"
-//#include "pico/types.h"
 #include "pico/async_context.h"
 #include "pico/async_context_poll.h"
 #include "pico/runtime.h"
-
-//#define STR_BUF_LEN 100
-
-
-//static int c;
 
 async_context_poll_t async_context_console;
 async_when_pending_worker_t process_char_worker;

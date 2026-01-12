@@ -1,11 +1,3 @@
-/*
- * usb_device_cdc.c
- *
- *  callbacks 4 midi
- *
- *
- *  Created on: 09.10.2023
- */
 
 #include "tusb.h"
 #include "usb_device_midi.h"
