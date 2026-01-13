@@ -20,7 +20,7 @@ int main(void)
 
 	stdio_init_all();
 
-	async_context_t *async_context_console;
+	console_task_t console_task;
 	async_context_t *async_context_blinky;
 	async_context_t *async_context_tinyusb;
 
@@ -29,11 +29,8 @@ int main(void)
 			to_ms_since_boot(get_absolute_time()) //
 					);
 
-	async_context_console = async_console_init();
-	if (async_context_console == NULL )
-	{
-		panic("console iii");
-	}
+	console_task_init(&console_task);
+
 	async_context_blinky = async_blinky_init();
 	if (async_context_blinky == NULL )
 	{
@@ -48,7 +45,7 @@ int main(void)
 
 	while (true)
 	{
-		async_context_poll( async_context_console);
+		async_context_poll( &console_task.async_context.core);
 		async_context_poll( async_context_blinky);
 		async_context_poll( async_context_tinyusb);
 

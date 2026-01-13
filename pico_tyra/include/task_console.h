@@ -9,8 +9,16 @@
 #define TASK_CONSOLE_H_
 
 
-#include "pico/async_context.h"
+#include "pico/async_context_poll.h"
 
-async_context_t *async_console_init(void);
+typedef struct
+{
+	async_context_poll_t async_context;
+	async_when_pending_worker_t worker;
+	char c;
+	bool has;
+} console_task_t;
+
+void console_task_init(console_task_t *task);
 
 #endif /* TASK_CONSOLE_H_ */

@@ -16,30 +16,11 @@
 #include "pico/async_context_poll.h"
 #include "pico/runtime.h"
 
-async_context_poll_t async_context_console;
-async_when_pending_worker_t process_char_worker;
-
-struct char_callback_para_t
+void process_char(async_context_t *taskp,
+				  async_when_pending_worker_t *worker)
 {
-	char c;
-	bool has;
-} cbp;
-
-static void console_menu()
-{
-	printf("\n\n");
-	printf("------------------------------------\n");
-	printf("AUDIO Test\n");
-	printf("r reset processor\n");
-	printf("e event bits\n");
-	printf("press key to select\n");
-	printf("------------------------------------\n");
-}
-
-void process_char(async_context_t *context,
-				  struct async_when_pending_worker *worker)
-{
-	switch (cbp.c)
+	console_task_t *task = worker->user_data;
+	switch (task->c)
 	{
 	case 'r':
 	{
@@ -51,32 +32,38 @@ void process_char(async_context_t *context,
 	break;
 	case ' ':
 	default:
-		console_menu();
+		printf("\n\n");
+		printf("------------------------------------\n");
+		printf("AUDIO Test\n");
+		printf("r reset processor\n");
+		printf("e event bits\n");
+		printf("press key to select\n");
+		printf("------------------------------------\n");
 		break;
 	}
-	cbp.has = false;
+	task->has = false;
 }
 
-void chars_available_callback(void *char_callback_para)
+void chars_available_callback(void *taskp)
 {
-	cbp.c = getchar_timeout_us(1);
-	cbp.has = true;
-	async_context_set_work_pending(&async_context_console.core,
-								   &process_char_worker);
+	console_task_t *task = taskp;
+	task->c = getchar_timeout_us(1);
+	task->has = true;
+	async_context_set_work_pending(&task->async_context.core,
+								   &task->worker);
 }
 
-async_context_t *async_console_init(void)
+void console_task_init(console_task_t *task)
 {
-	if (!async_context_poll_init_with_defaults(&async_context_console))
+	if (!async_context_poll_init_with_defaults(&task->async_context))
 	{
 		panic("Async context console init fail");
-		return NULL;
+		return;
 	}
-	stdio_set_chars_available_callback(chars_available_callback, (void *)&cbp);
+	stdio_set_chars_available_callback(chars_available_callback, task);
 
-	process_char_worker.do_work = process_char;
-	async_context_add_when_pending_worker(&async_context_console.core,
-										  &process_char_worker);
-
-	return &async_context_console.core;
+	task->worker.do_work = process_char;
+	task->worker.user_data = task;
+	async_context_add_when_pending_worker(&(task->async_context.core),
+										  &task->worker);
 }
