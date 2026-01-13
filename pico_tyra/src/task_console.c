@@ -9,7 +9,6 @@
 
 #include <stdio.h>
 
-
 #include "pico.h"
 #include "pico/stdlib.h"
 #include "pico/stdio.h"
@@ -35,23 +34,21 @@ static void console_menu()
 	printf("e event bits\n");
 	printf("press key to select\n");
 	printf("------------------------------------\n");
-
 }
 
-
 void process_char(async_context_t *context,
-		struct async_when_pending_worker *worker)
+				  struct async_when_pending_worker *worker)
 {
 	switch (cbp.c)
 	{
 	case 'r':
 	{
 	}
-		break;
+	break;
 	case 'e':
 	{
 	}
-		break;
+	break;
 	case ' ':
 	default:
 		console_menu();
@@ -60,28 +57,26 @@ void process_char(async_context_t *context,
 	cbp.has = false;
 }
 
-
 void chars_available_callback(void *char_callback_para)
 {
 	cbp.c = getchar_timeout_us(1);
 	cbp.has = true;
 	async_context_set_work_pending(&async_context_console.core,
-			&process_char_worker);
+								   &process_char_worker);
 }
 
-async_context_t* async_console_init(void)
+async_context_t *async_console_init(void)
 {
 	if (!async_context_poll_init_with_defaults(&async_context_console))
 	{
 		panic("Async context console init fail");
-		return NULL ;
+		return NULL;
 	}
-	stdio_set_chars_available_callback(chars_available_callback, (void*) &cbp);
+	stdio_set_chars_available_callback(chars_available_callback, (void *)&cbp);
 
 	process_char_worker.do_work = process_char;
 	async_context_add_when_pending_worker(&async_context_console.core,
-			&process_char_worker);
+										  &process_char_worker);
 
 	return &async_context_console.core;
 }
-
