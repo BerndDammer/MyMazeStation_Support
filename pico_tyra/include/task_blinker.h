@@ -8,9 +8,14 @@
 #ifndef TASK_BLINKER_H_
 #define TASK_BLINKER_H_
 
-#include "pico/async_context.h"
 #include "pico/async_context_poll.h"
 
-async_context_t* async_blinky_init(void);
+typedef struct
+{
+	async_context_poll_t async_context;
+    async_at_time_worker_t worker;
+} blinky_task_t;
+
+void blinky_task_init(blinky_task_t *task);
 
 #endif /* TASK_BLINKER_H_ */

@@ -12,7 +12,6 @@
 #include "pico.h"
 #include "pico/stdlib.h"
 #include "pico/stdio.h"
-#include "pico/async_context.h"
 #include "pico/async_context_poll.h"
 #include "pico/runtime.h"
 

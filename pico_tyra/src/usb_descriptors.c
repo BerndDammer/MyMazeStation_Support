@@ -167,9 +167,9 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid)
     break;
 
   case STRID_SERIAL:
-    //chr_count = pico_get_unique_board_id_string	(_desc_str + 1, 32);
-    // -------------------------------
-    //chr_count = pico_get_unique_board_id_string	(_desc_str + 1, 32);
+    // chr_count = pico_get_unique_board_id_string	(_desc_str + 1, 32);
+    //  -------------------------------
+    // chr_count = pico_get_unique_board_id_string	(_desc_str + 1, 32);
     chr_count = board_usb_get_serial(_desc_str + 1, 32);
     break;
 

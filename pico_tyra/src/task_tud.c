@@ -9,37 +9,29 @@
 #include <stdio.h>
 #include "tusb.h"
 
-#include "pico/async_context.h"
 #include "pico/async_context_poll.h"
 
-async_context_poll_t async_context_tinyusb;
-async_when_pending_worker_t tinyusb_worker;
-
-
 void process_tud(async_context_t *context,
-		struct async_when_pending_worker *worker)
+				 struct async_when_pending_worker *worker)
 {
-		tud_task();
-	async_context_set_work_pending(&async_context_tinyusb.core,
-			&tinyusb_worker);
+	tud_task_t *task = worker->user_data;
+
+	tud_task();
+	async_context_set_work_pending(&task->async_context.core, &task->worker);
 }
 
-
-async_context_t *async_tinyusb_init(void)
+void tud_task_init(tud_task_t *task)
 {
 	tusb_init();
 
-	if (!async_context_poll_init_with_defaults(&async_context_tinyusb))
+	if (!async_context_poll_init_with_defaults(&task->async_context))
 	{
 		panic("Async context console init fail");
-		return NULL;
+		return;
 	}
-		tinyusb_worker.do_work = process_tud;
-	async_context_add_when_pending_worker(&async_context_tinyusb.core,
-			&tinyusb_worker);
+	task->worker.do_work = process_tud;
+	task->worker.user_data = task;
 
-			async_context_set_work_pending(&async_context_tinyusb.core,
-			&tinyusb_worker);
-
-	return( &async_context_tinyusb.core);
+	async_context_add_when_pending_worker(&task->async_context.core, &task->worker);
+	async_context_set_work_pending(&task->async_context.core, &task->worker);
 }

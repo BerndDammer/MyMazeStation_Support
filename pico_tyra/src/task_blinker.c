@@ -14,39 +14,37 @@
 const uint LED_PIN = PICO_DEFAULT_LED_PIN;
 static bool toggle = true;
 
-async_context_poll_t async_context_blinky;
-async_at_time_worker_t s_process_blink;
-
-static void port_blinker_init()
-{
-    gpio_init(LED_PIN);
-    gpio_set_dir(LED_PIN, GPIO_OUT);
-}
-
-
 void process_blink(async_context_t *context,
-		struct async_work_on_timeout *worker)
+				   struct async_work_on_timeout *worker)
 {
-		toggle = !toggle;
-	    gpio_put(LED_PIN, toggle);
+	blinky_task_t *task = worker->user_data;
 
-	async_context_add_at_time_worker_in_ms(&async_context_blinky.core,
-			&s_process_blink, BLINK_TIMEOUT_MS);
+	toggle = !toggle;
+	gpio_put(LED_PIN, toggle);
+
+	async_context_add_at_time_worker_in_ms(
+		&task->async_context.core,
+		&task->worker,
+		BLINK_TIMEOUT_MS);
 }
 
-async_context_t* async_blinky_init(void)
+void blinky_task_init(blinky_task_t *task)
 {
-	port_blinker_init();
-
-	if (!async_context_poll_init_with_defaults(&async_context_blinky))
 	{
-		panic("Async context console init fail");
-		return NULL ;
+		gpio_init(LED_PIN);
+		gpio_set_dir(LED_PIN, GPIO_OUT);
 	}
 
-	s_process_blink.do_work = process_blink;
-	async_context_add_at_time_worker_in_ms(&async_context_blinky.core,
-			&s_process_blink, BLINK_TIMEOUT_MS);
+	if (!async_context_poll_init_with_defaults(&task->async_context))
+	{
+		panic("Async context console init fail");
+	}
 
-	return &async_context_blinky.core;
+	task->worker.do_work = process_blink;
+	task->worker.user_data = task;
+
+	async_context_add_at_time_worker_in_ms(
+		&task->async_context.core,
+		&task->worker,
+		BLINK_TIMEOUT_MS);
 }

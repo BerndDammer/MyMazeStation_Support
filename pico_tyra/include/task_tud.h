@@ -8,10 +8,15 @@
 #ifndef TASK_TUD_H_
 #define TASK_TUD_H_
 
-#include "pico/async_context.h"
+#include "pico/async_context_poll.h"
 
-async_context_t *async_tinyusb_init(void);
+typedef struct
+{
+	async_context_poll_t async_context;
+    async_when_pending_worker_t worker;
+} tud_task_t;
 
+void tud_task_init(tud_task_t *task);
 
 
 #endif /* TASK_TUD_H_ */
